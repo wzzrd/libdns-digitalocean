@@ -44,14 +44,14 @@ func TestClient_getDNSEntries(t *testing.T) {
 	}
 
 	// Verify first record
-	if records[0].Type != "A" || records[0].Name != "test" ||
-		records[0].Value != "192.168.1.1" || records[0].ID != "1" {
+	if records[0].RR().Type != "A" || records[0].RR().Name != "test" ||
+		records[0].RR().Data != "192.168.1.1" || records[0].(dns).ID != "1" {
 		t.Errorf("Client.getDNSEntries()[0] = %v, want A record", records[0])
 	}
 
 	// Verify second record
-	if records[1].Type != "CNAME" || records[1].Name != "www" ||
-		records[1].Value != "example.com" || records[1].ID != "2" {
+	if records[1].RR().Type != "CNAME" || records[1].RR().Name != "www" ||
+		records[1].RR().Data != "example.com" || records[1].(dns).ID != "2" {
 		t.Errorf("Client.getDNSEntries()[1] = %v, want CNAME record", records[1])
 	}
 
@@ -66,11 +66,11 @@ func TestClient_getDNSEntries(t *testing.T) {
 
 func TestClient_addDNSEntry(t *testing.T) {
 	// Test record to add
-	testRecord := libdns.Record{
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
-		TTL:   3600 * time.Second,
+	testRecord := libdns.RR{
+		Type: "A",
+		Name: "test",
+		Data: "192.168.1.1",
+		TTL:  3600 * time.Second,
 	}
 
 	// Test successful call
@@ -84,12 +84,12 @@ func TestClient_addDNSEntry(t *testing.T) {
 	}
 
 	// Verify the returned record
-	if resultRecord.Type != testRecord.Type ||
-		resultRecord.Name != testRecord.Name ||
-		resultRecord.Value != testRecord.Value ||
-		resultRecord.ID != "12345" {
-		t.Errorf("Client.addDNSEntry() record mismatch, got = %v, want Type=%s, Name=%s, Value=%s, ID=12345",
-			resultRecord, testRecord.Type, testRecord.Name, testRecord.Value)
+	if resultRecord.RR().Type != testRecord.Type ||
+		resultRecord.RR().Name != testRecord.Name ||
+		resultRecord.RR().Data != testRecord.Data ||
+		resultRecord.(dns).ID != "12345" {
+		t.Errorf("Client.addDNSEntry() record mismatch, got = %v, want Type=%s, Name=%s, Data=%s, ID=12345",
+			resultRecord, testRecord.RR().Type, testRecord.RR().Name, testRecord.RR().Data)
 	}
 
 	// Test error case
@@ -103,11 +103,13 @@ func TestClient_addDNSEntry(t *testing.T) {
 
 func TestClient_removeDNSEntry(t *testing.T) {
 	// Test record to delete
-	testRecord := libdns.Record{
-		ID:    "1",
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
+	testRecord := dns{
+		ID: "1",
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.1",
+		},
 	}
 
 	// Test successful call
@@ -121,8 +123,8 @@ func TestClient_removeDNSEntry(t *testing.T) {
 	}
 
 	// Verify the ID was preserved
-	if resultRecord.ID != testRecord.ID {
-		t.Errorf("Client.removeDNSEntry() ID mismatch, got = %v, want = %v", resultRecord.ID, testRecord.ID)
+	if resultRecord.(dns).ID != testRecord.ID {
+		t.Errorf("Client.removeDNSEntry() ID mismatch, got = %v, want = %v", resultRecord.(dns).ID, testRecord.ID)
 	}
 
 	// Test error case - API error
@@ -135,11 +137,13 @@ func TestClient_removeDNSEntry(t *testing.T) {
 
 	// Test error case - invalid ID
 	p = setupTest(nil, nil)
-	invalidIDRecord := libdns.Record{
-		ID:    "invalid", // Non-numeric ID
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
+	invalidIDRecord := dns{
+		ID: "invalid", // Non-numeric ID
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.1",
+		},
 	}
 
 	_, err = p.removeDNSEntry(ctx, "example.com", invalidIDRecord)
@@ -150,12 +154,14 @@ func TestClient_removeDNSEntry(t *testing.T) {
 
 func TestClient_updateDNSEntry(t *testing.T) {
 	// Test record to update
-	testRecord := libdns.Record{
-		ID:    "1",
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.2", // Updated IP
-		TTL:   7200 * time.Second,
+	testRecord := dns{
+		ID: "1",
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.2", // Updated IP
+			TTL:  7200 * time.Second,
+		},
 	}
 
 	// Test successful call
@@ -169,10 +175,10 @@ func TestClient_updateDNSEntry(t *testing.T) {
 	}
 
 	// Verify the record was preserved
-	if resultRecord.ID != testRecord.ID ||
-		resultRecord.Type != testRecord.Type ||
-		resultRecord.Name != testRecord.Name ||
-		resultRecord.Value != testRecord.Value {
+	if resultRecord.(dns).ID != testRecord.ID ||
+		resultRecord.RR().Type != testRecord.RR().Type ||
+		resultRecord.RR().Name != testRecord.RR().Name ||
+		resultRecord.RR().Data != testRecord.RR().Data {
 		t.Errorf("Client.updateDNSEntry() record mismatch, got = %v, want = %v", resultRecord, testRecord)
 	}
 
@@ -186,11 +192,13 @@ func TestClient_updateDNSEntry(t *testing.T) {
 
 	// Test error case - invalid ID
 	p = setupTest(nil, nil)
-	invalidIDRecord := libdns.Record{
-		ID:    "invalid", // Non-numeric ID
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
+	invalidIDRecord := dns{
+		ID: "invalid", // Non-numeric ID
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.1",
+		},
 	}
 
 	_, err = p.updateDNSEntry(ctx, "example.com", invalidIDRecord)
