@@ -6,7 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/digitalocean/godo v1.148.0
-	github.com/libdns/libdns v0.2.1
+	github.com/libdns/libdns v1.0.0
 )
 
 require (
