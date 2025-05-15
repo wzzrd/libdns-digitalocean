@@ -88,7 +88,7 @@ func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdn
 
 	// Get ID from dns record
 	var idRaw string
-	if dnsRecord, ok := record.(dns); ok {
+	if dnsRecord, ok := record.(DNS); ok {
 		idRaw = dnsRecord.ID
 	}
 
@@ -113,7 +113,7 @@ func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdn
 
 	// Get ID from dns record
 	var idRaw string
-	if dnsRecord, ok := record.(dns); ok {
+	if dnsRecord, ok := record.(DNS); ok {
 		idRaw = dnsRecord.ID
 	}
 

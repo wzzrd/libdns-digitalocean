@@ -45,13 +45,13 @@ func TestClient_getDNSEntries(t *testing.T) {
 
 	// Verify first record
 	if records[0].RR().Type != "A" || records[0].RR().Name != "test" ||
-		records[0].RR().Data != "192.168.1.1" || records[0].(dns).ID != "1" {
+		records[0].RR().Data != "192.168.1.1" || records[0].(DNS).ID != "1" {
 		t.Errorf("Client.getDNSEntries()[0] = %v, want A record", records[0])
 	}
 
 	// Verify second record
 	if records[1].RR().Type != "CNAME" || records[1].RR().Name != "www" ||
-		records[1].RR().Data != "example.com" || records[1].(dns).ID != "2" {
+		records[1].RR().Data != "example.com" || records[1].(DNS).ID != "2" {
 		t.Errorf("Client.getDNSEntries()[1] = %v, want CNAME record", records[1])
 	}
 
@@ -87,7 +87,7 @@ func TestClient_addDNSEntry(t *testing.T) {
 	if resultRecord.RR().Type != testRecord.Type ||
 		resultRecord.RR().Name != testRecord.Name ||
 		resultRecord.RR().Data != testRecord.Data ||
-		resultRecord.(dns).ID != "12345" {
+		resultRecord.(DNS).ID != "12345" {
 		t.Errorf("Client.addDNSEntry() record mismatch, got = %v, want Type=%s, Name=%s, Data=%s, ID=12345",
 			resultRecord, testRecord.RR().Type, testRecord.RR().Name, testRecord.RR().Data)
 	}
@@ -103,7 +103,7 @@ func TestClient_addDNSEntry(t *testing.T) {
 
 func TestClient_removeDNSEntry(t *testing.T) {
 	// Test record to delete
-	testRecord := dns{
+	testRecord := DNS{
 		ID: "1",
 		Record: libdns.RR{
 			Type: "A",
@@ -123,8 +123,8 @@ func TestClient_removeDNSEntry(t *testing.T) {
 	}
 
 	// Verify the ID was preserved
-	if resultRecord.(dns).ID != testRecord.ID {
-		t.Errorf("Client.removeDNSEntry() ID mismatch, got = %v, want = %v", resultRecord.(dns).ID, testRecord.ID)
+	if resultRecord.(DNS).ID != testRecord.ID {
+		t.Errorf("Client.removeDNSEntry() ID mismatch, got = %v, want = %v", resultRecord.(DNS).ID, testRecord.ID)
 	}
 
 	// Test error case - API error
@@ -137,7 +137,7 @@ func TestClient_removeDNSEntry(t *testing.T) {
 
 	// Test error case - invalid ID
 	p = setupTest(nil, nil)
-	invalidIDRecord := dns{
+	invalidIDRecord := DNS{
 		ID: "invalid", // Non-numeric ID
 		Record: libdns.RR{
 			Type: "A",
@@ -154,7 +154,7 @@ func TestClient_removeDNSEntry(t *testing.T) {
 
 func TestClient_updateDNSEntry(t *testing.T) {
 	// Test record to update
-	testRecord := dns{
+	testRecord := DNS{
 		ID: "1",
 		Record: libdns.RR{
 			Type: "A",
@@ -175,7 +175,7 @@ func TestClient_updateDNSEntry(t *testing.T) {
 	}
 
 	// Verify the record was preserved
-	if resultRecord.(dns).ID != testRecord.ID ||
+	if resultRecord.(DNS).ID != testRecord.ID ||
 		resultRecord.RR().Type != testRecord.RR().Type ||
 		resultRecord.RR().Name != testRecord.RR().Name ||
 		resultRecord.RR().Data != testRecord.RR().Data {
@@ -192,7 +192,7 @@ func TestClient_updateDNSEntry(t *testing.T) {
 
 	// Test error case - invalid ID
 	p = setupTest(nil, nil)
-	invalidIDRecord := dns{
+	invalidIDRecord := DNS{
 		ID: "invalid", // Non-numeric ID
 		Record: libdns.RR{
 			Type: "A",
