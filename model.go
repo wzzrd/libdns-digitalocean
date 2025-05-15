@@ -18,12 +18,25 @@ func (d DNS) RR() libdns.RR {
 	return d.Record
 }
 
-// fromRecord creates a dns struct from a libdns.RR, with an optional ID
+// fromRecord creates a dns struct from a libdns.Record, with an optional ID
 func fromRecord(record libdns.Record, id string) DNS {
 	rr := record.RR()
 	return DNS{
 		Record: rr,
 		ID:     id,
+	}
+}
+
+// fromGodo creates a dns struct from godo.DomainRecord
+func fromGodo(entry godo.DomainRecord) DNS {
+	return DNS{
+		Record: libdns.RR{
+			Name: entry.Name,
+			Data: entry.Data,
+			Type: entry.Type,
+			TTL:  time.Duration(entry.TTL) * time.Second,
+		},
+		ID: strconv.Itoa(entry.ID),
 	}
 }
 
@@ -38,17 +51,15 @@ func recordToGoDo(record libdns.Record) godo.DomainRecordEditRequest {
 	}
 }
 
-// godoToRecord converts a DigitalOcean DNS record to dns type
-func godoToRecord(entry godo.DomainRecord) DNS {
-	rr := libdns.RR{
-		Name: entry.Name,
-		Data: entry.Data,
-		Type: entry.Type,
-		TTL:  time.Duration(entry.TTL) * time.Second,
+// idFromRecord get the ID from a libdns.Record
+func idFromRecord(record libdns.Record) (int, error) {
+	var raw string
+	if dns, ok := record.(DNS); ok {
+		raw = dns.ID
 	}
-
-	return DNS{
-		Record: rr,
-		ID:     strconv.Itoa(entry.ID),
+	id, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, err
 	}
+	return id, nil
 }

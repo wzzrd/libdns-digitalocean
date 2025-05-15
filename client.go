@@ -37,7 +37,7 @@ func (p *Provider) getDNSEntries(ctx context.Context, zone string) ([]libdns.Rec
 		}
 
 		for _, entry := range domains {
-			record := godoToRecord(entry)
+			record := fromGodo(entry)
 			records = append(records, record)
 		}
 
@@ -64,13 +64,7 @@ func (p *Provider) addDNSEntry(ctx context.Context, zone string, record libdns.R
 
 	p.getClient()
 
-	rr := record.RR()
-	entry := godo.DomainRecordEditRequest{
-		Name: rr.Name,
-		Data: rr.Data,
-		Type: rr.Type,
-		TTL:  int(rr.TTL.Seconds()),
-	}
+	entry := recordToGoDo(record)
 
 	rec, _, err := p.client.Domains.CreateRecord(ctx, zone, &entry)
 	if err != nil {
@@ -87,12 +81,7 @@ func (p *Provider) removeDNSEntry(ctx context.Context, zone string, record libdn
 	p.getClient()
 
 	// Get ID from dns record
-	var idRaw string
-	if dnsRecord, ok := record.(DNS); ok {
-		idRaw = dnsRecord.ID
-	}
-
-	id, err := strconv.Atoi(idRaw)
+	id, err := idFromRecord(record)
 	if err != nil {
 		return record, err
 	}
@@ -112,23 +101,12 @@ func (p *Provider) updateDNSEntry(ctx context.Context, zone string, record libdn
 	p.getClient()
 
 	// Get ID from dns record
-	var idRaw string
-	if dnsRecord, ok := record.(DNS); ok {
-		idRaw = dnsRecord.ID
-	}
-
-	id, err := strconv.Atoi(idRaw)
+	id, err := idFromRecord(record)
 	if err != nil {
 		return record, err
 	}
 
-	rr := record.RR()
-	entry := godo.DomainRecordEditRequest{
-		Name: rr.Name,
-		Data: rr.Data,
-		Type: rr.Type,
-		TTL:  int(rr.TTL.Seconds()),
-	}
+	entry := recordToGoDo(record)
 
 	_, _, err = p.client.Domains.EditRecord(ctx, zone, id, &entry)
 	if err != nil {
