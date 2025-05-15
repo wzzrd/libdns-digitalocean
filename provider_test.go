@@ -219,14 +219,14 @@ func TestProvider_GetRecords(t *testing.T) {
 	}
 
 	// Verify first record
-	if records[0].Type != "A" || records[0].Name != "test" ||
-		records[0].Value != "192.168.1.1" || records[0].ID != "1" {
+	if records[0].RR().Type != "A" || records[0].RR().Name != "test" ||
+		records[0].RR().Data != "192.168.1.1" || records[0].(dns).ID != "1" {
 		t.Errorf("Provider.GetRecords()[0] = %v, want A record", records[0])
 	}
 
 	// Verify second record
-	if records[1].Type != "CNAME" || records[1].Name != "www" ||
-		records[1].Value != "example.com" || records[1].ID != "2" {
+	if records[1].RR().Type != "CNAME" || records[1].RR().Name != "www" ||
+		records[1].RR().Data != "example.com" || records[1].(dns).ID != "2" {
 		t.Errorf("Provider.GetRecords()[1] = %v, want CNAME record", records[1])
 	}
 
@@ -241,11 +241,11 @@ func TestProvider_GetRecords(t *testing.T) {
 
 func TestProvider_AppendRecords(t *testing.T) {
 	// Test record to append
-	testRecord := libdns.Record{
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
-		TTL:   3600 * time.Second,
+	testRecord := libdns.RR{
+		Type: "A",
+		Name: "test",
+		Data: "192.168.1.1",
+		TTL:  3600 * time.Second,
 	}
 
 	// Test successful call
@@ -263,12 +263,12 @@ func TestProvider_AppendRecords(t *testing.T) {
 	}
 
 	// Verify the returned record
-	if appendedRecords[0].Type != testRecord.Type ||
-		appendedRecords[0].Name != testRecord.Name ||
-		appendedRecords[0].Value != testRecord.Value ||
-		appendedRecords[0].ID != "12345" {
-		t.Errorf("Provider.AppendRecords() record mismatch, got = %v, want Type=%s, Name=%s, Value=%s, ID=12345",
-			appendedRecords[0], testRecord.Type, testRecord.Name, testRecord.Value)
+	if appendedRecords[0].RR().Type != testRecord.RR().Type ||
+		appendedRecords[0].RR().Name != testRecord.RR().Name ||
+		appendedRecords[0].RR().Data != testRecord.RR().Data ||
+		appendedRecords[0].(dns).ID != "12345" {
+		t.Errorf("Provider.AppendRecords() record mismatch, got = %v, want Type=%s, Name=%s, Data=%s, ID=12345",
+			appendedRecords[0], testRecord.RR().Type, testRecord.RR().Name, testRecord.RR().Data)
 	}
 
 	// Test error case
@@ -282,12 +282,14 @@ func TestProvider_AppendRecords(t *testing.T) {
 
 func TestProvider_DeleteRecords(t *testing.T) {
 	// Test record to delete
-	testRecord := libdns.Record{
-		ID:    "1",
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
-		TTL:   3600 * time.Second,
+	testRecord := dns{
+		ID: "1",
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.1",
+			TTL:  3600 * time.Second,
+		},
 	}
 
 	// Test successful call
@@ -305,8 +307,8 @@ func TestProvider_DeleteRecords(t *testing.T) {
 	}
 
 	// Verify the returned record
-	if deletedRecords[0].ID != testRecord.ID {
-		t.Errorf("Provider.DeleteRecords() record ID mismatch, got = %v, want = %v", deletedRecords[0].ID, testRecord.ID)
+	if deletedRecords[0].(dns).ID != testRecord.ID {
+		t.Errorf("Provider.DeleteRecords() record ID mismatch, got = %v, want = %v", deletedRecords[0].(dns).ID, testRecord.ID)
 	}
 
 	// Test error case
@@ -320,11 +322,13 @@ func TestProvider_DeleteRecords(t *testing.T) {
 	// Test error case with invalid ID
 	p = setupTest(nil, nil)
 
-	invalidIDRecord := libdns.Record{
-		ID:    "invalid", // Non-numeric ID
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
+	invalidIDRecord := dns{
+		ID: "invalid", // Non-numeric ID
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.1",
+		},
 	}
 
 	_, err = p.DeleteRecords(ctx, "example.com.", []libdns.Record{invalidIDRecord})
@@ -335,12 +339,14 @@ func TestProvider_DeleteRecords(t *testing.T) {
 
 func TestProvider_SetRecords(t *testing.T) {
 	// Test record to set
-	testRecord := libdns.Record{
-		ID:    "1",
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
-		TTL:   3600 * time.Second,
+	testRecord := dns{
+		ID: "1",
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.1",
+			TTL:  3600 * time.Second,
+		},
 	}
 
 	// Test successful call
@@ -358,8 +364,8 @@ func TestProvider_SetRecords(t *testing.T) {
 	}
 
 	// Verify the returned record
-	if setRecords[0].ID != testRecord.ID {
-		t.Errorf("Provider.SetRecords() record ID mismatch, got = %v, want = %v", setRecords[0].ID, testRecord.ID)
+	if setRecords[0].(dns).ID != testRecord.ID {
+		t.Errorf("Provider.SetRecords() record ID mismatch, got = %v, want = %v", setRecords[0].(dns).ID, testRecord.ID)
 	}
 
 	// Test error case
@@ -373,11 +379,13 @@ func TestProvider_SetRecords(t *testing.T) {
 	// Test error case with invalid ID
 	p = setupTest(nil, nil)
 
-	invalidIDRecord := libdns.Record{
-		ID:    "invalid", // Non-numeric ID
-		Type:  "A",
-		Name:  "test",
-		Value: "192.168.1.1",
+	invalidIDRecord := dns{
+		ID: "invalid", // Non-numeric ID
+		Record: libdns.RR{
+			Type: "A",
+			Name: "test",
+			Data: "192.168.1.1",
+		},
 	}
 
 	_, err = p.SetRecords(ctx, "example.com.", []libdns.Record{invalidIDRecord})
